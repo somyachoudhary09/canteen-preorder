@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import PhonePreview from "./PhonePreview";
 
 export default function Hero() {
@@ -30,14 +31,18 @@ export default function Hero() {
             Spend more time with friends instead of standing in long queues.
           </p>
 
-          <div className="mt-10 flex gap-5">
-            <button className="rounded-2xl bg-green-500 px-8 py-4 font-bold text-black transition hover:scale-105 hover:shadow-[0_0_30px_rgba(34,197,94,0.35)]">
+          <div className="mt-10 flex flex-wrap gap-5">
+            <Link href="#pre-order" className="rounded-2xl bg-green-500 px-8 py-4 font-bold text-black transition hover:scale-105 hover:shadow-[0_0_30px_rgba(34,197,94,0.35)]">
               Order Now
-            </button>
+            </Link>
 
-            <button className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-white backdrop-blur transition hover:bg-white/10">
+            <Link href="/admin" className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-8 py-4 text-emerald-300 backdrop-blur transition hover:bg-emerald-500/20">
+              Owner Login
+            </Link>
+
+            <a href="#pre-order" className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-white backdrop-blur transition hover:bg-white/10">
               View Demo
-            </button>
+            </a>
           </div>
 
           <div className="mt-14 flex gap-12">

@@ -47,6 +47,7 @@ const menu = [
 
 export default function PhonePreview() {
   const [showPopup, setShowPopup] = useState(true);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -59,6 +60,7 @@ export default function PhonePreview() {
     { id: number; quantity: number }[]
   >([]);
   const increaseQty = (id: number) => {
+    setOrderPlaced(false);
     setCart((prev) => {
       const existing = prev.find((item) => item.id === id);
 
@@ -75,6 +77,7 @@ export default function PhonePreview() {
   };
 
   const decreaseQty = (id: number) => {
+    setOrderPlaced(false);
     setCart((prev) =>
       prev
         .map((item) =>
@@ -94,6 +97,42 @@ export default function PhonePreview() {
     (sum, item) => sum + item.price * getQty(item.id),
     0
   );
+
+  const [orderMessage, setOrderMessage] = useState<string>("");
+
+  const handlePlaceOrder = async () => {
+    if (selectedItems.length === 0) return;
+
+    const payload = {
+      customerName: "Guest",
+      pickupTime: "12:30 PM",
+      items: selectedItems.map((item) => ({
+        id: item.id.toString(),
+        name: item.name,
+        quantity: getQty(item.id),
+        price: item.price,
+      })),
+      total,
+    };
+
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
+
+      setOrderPlaced(true);
+      setOrderMessage("Order placed successfully! We’ll prepare it for pickup.");
+      setCart([]);
+    } catch (error) {
+      setOrderMessage("Could not place the order. Please try again.");
+    }
+  };
 
   return (
     <motion.div
@@ -291,15 +330,19 @@ export default function PhonePreview() {
               </>
             )}
 
+            {(orderPlaced || orderMessage) && (
+              <p className={`mb-3 rounded-xl px-3 py-2 text-sm ${orderPlaced ? "border border-green-500/30 bg-green-500/10 text-green-300" : "border border-red-500/30 bg-red-500/10 text-red-300"}`}>
+                {orderMessage}
+              </p>
+            )}
+
             <button
+              onClick={handlePlaceOrder}
               disabled={selectedItems.length === 0}
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-4 font-bold text-black transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CheckCircle2 size={20} />
-
-              {selectedItems.length === 0
-                ? "Select Items"
-                : `Place Order • ₹${total}`}
+              {selectedItems.length === 0 ? "Select Items" : `Place Order • ₹${total}`}
             </button>
           </div>
         </div>
