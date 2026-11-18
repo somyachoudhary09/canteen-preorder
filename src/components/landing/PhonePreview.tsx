@@ -47,7 +47,7 @@ const menu = [
 
 export default function PhonePreview() {
   const [showPopup, setShowPopup] = useState(true);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,7 +60,6 @@ export default function PhonePreview() {
     { id: number; quantity: number }[]
   >([]);
   const increaseQty = (id: number) => {
-    setOrderPlaced(false);
     setCart((prev) => {
       const existing = prev.find((item) => item.id === id);
 
@@ -77,7 +76,6 @@ export default function PhonePreview() {
   };
 
   const decreaseQty = (id: number) => {
-    setOrderPlaced(false);
     setCart((prev) =>
       prev
         .map((item) =>
@@ -98,8 +96,6 @@ export default function PhonePreview() {
     0
   );
 
-  const [orderMessage, setOrderMessage] = useState<string>("");
-
   const handlePlaceOrder = async () => {
     if (selectedItems.length === 0) return;
 
@@ -115,35 +111,63 @@ export default function PhonePreview() {
       total,
     };
 
-    try {
-      const response = await fetch("/api/orders", {
+    await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      });
+      }).catch(() => undefined);
 
-      if (!response.ok) {
-        throw new Error("Server error");
-      }
-
-      setOrderPlaced(true);
-      setOrderMessage("Order placed successfully! We’ll prepare it for pickup.");
-      setCart([]);
-    } catch (error) {
-      setOrderMessage("Could not place the order. Please try again.");
-    }
+    setCart([]);
+    setShowOrderConfirmation(true);
   };
 
   return (
-    <motion.div
-      animate={{ y: [0, -12, 0] }}
-      transition={{
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-      className="relative"
-    >
+    <>
+      <AnimatePresence>
+        {showOrderConfirmation && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowOrderConfirmation(false)}
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="order-confirmation-title"
+              className="w-full max-w-sm rounded-2xl border border-green-500/30 bg-zinc-900 p-7 text-center shadow-2xl"
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <CheckCircle2 className="mx-auto mb-4 text-green-400" size={42} />
+              <h2 id="order-confirmation-title" className="text-xl font-bold text-white">
+                Congratulations!
+              </h2>
+              <p className="mt-2 text-sm text-zinc-300">Your order is placed.</p>
+              <button
+                type="button"
+                onClick={() => setShowOrderConfirmation(false)}
+                className="mt-6 w-full rounded-xl bg-green-500 px-4 py-3 font-semibold text-black transition hover:bg-green-400"
+              >
+                Done
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        animate={{ y: [0, -12, 0] }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="relative"
+      >
       {/* Glow */}
       <div className="absolute inset-0 scale-110 rounded-[60px] bg-blue-500/25 blur-3xl" />
 
@@ -330,12 +354,6 @@ export default function PhonePreview() {
               </>
             )}
 
-            {(orderPlaced || orderMessage) && (
-              <p className={`mb-3 rounded-xl px-3 py-2 text-sm ${orderPlaced ? "border border-green-500/30 bg-green-500/10 text-green-300" : "border border-red-500/30 bg-red-500/10 text-red-300"}`}>
-                {orderMessage}
-              </p>
-            )}
-
             <button
               onClick={handlePlaceOrder}
               disabled={selectedItems.length === 0}
@@ -347,6 +365,7 @@ export default function PhonePreview() {
           </div>
         </div>
       </div>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }
